@@ -27,6 +27,7 @@ commands:
   replay   walk irreversible blocks from the node's block store into the database
   run      follow the node's block broadcasts (catches up first)
   status   print cursor, counts, proposals and system contracts
+  notify   init, preview, inspect, or deliver public Telegram notices
   version  print the build commit
 
 common flags (env fallback in parentheses):
@@ -103,6 +104,8 @@ func run(args []string) int {
 		err = cmdRun(ctx, args[1:])
 	case "status":
 		err = cmdStatus(ctx, args[1:])
+	case "notify":
+		err = cmdNotify(ctx, args[1:])
 	case "version":
 		writeVersion(os.Stdout)
 		return 0
