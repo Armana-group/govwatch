@@ -13,7 +13,7 @@ The purpose is to make changes to the chain's own contracts visible and auditabl
 - Keep separate records when identical proposal operations are resubmitted.
 - Report proposals and system contracts through the `status` command.
 
-Risk scoring, Slack/email notifications, heartbeat monitoring, and a web dashboard are not implemented yet. The watcher holds no signing keys and does not submit transactions.
+Public Telegram notices are available through the separate `notify` command; see [setup and delivery safeguards](docs/telegram-alerts.md). Risk scoring, Slack/email notifications, heartbeat monitoring, and a web dashboard are not implemented yet. The watcher holds no signing keys and does not submit transactions.
 
 ## Build and run
 
@@ -64,4 +64,4 @@ An earlier mainnet replay covered blocks 1 through 40,487,182. Its recorded acce
 
 Tests cover decoding, source validation, migrations, replay, reorgs, feed cancellation, and rollback reconstruction. Run `make test vet` for the current checkout. There is no CI workflow in this initial snapshot.
 
-Submissions made through another contract can have unknown operations. Code-upload history does not yet provide old-bytecode diffs. Alerts and an external heartbeat are required before this can serve as an unattended warning service. Keep local databases, credentials, captures, and operator-specific configuration outside version control.
+Submissions made through another contract can have unknown operations. Code-upload history does not yet provide old-bytecode diffs. Telegram delivery requires explicit destination setup and activation. An external heartbeat is still required before this can serve as an unattended warning service. Keep local databases, credentials, captures, and operator-specific configuration outside version control.

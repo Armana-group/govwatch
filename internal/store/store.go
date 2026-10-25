@@ -21,8 +21,9 @@ var schema string
 // event_index to system_changes, makes vote rows unique, and adds
 // operations_known / vote_tally / vote_threshold to proposals; 4 removes
 // event-derived rows left without an event index by the v3 migration once
-// their block has been re-applied; 5 adds tx_index to system_changes.
-const schemaVersion = 5
+// their block has been re-applied; 5 adds tx_index to system_changes;
+// 6 adds the independent public notification routes and durable outbox.
+const schemaVersion = 6
 
 type Store struct{ db *sql.DB }
 
@@ -130,8 +131,10 @@ func (s *Store) migrate(ctx context.Context) error {
 			}
 		}
 	}
-	if err := recomputeProposals(ctx, tx, 0); err != nil {
-		return err
+	if version < 5 {
+		if err := recomputeProposals(ctx, tx, 0); err != nil {
+			return err
+		}
 	}
 	if err := run(schema, fmt.Sprintf("PRAGMA user_version = %d", schemaVersion)); err != nil { // re-create indexes on rebuilt tables
 		return err

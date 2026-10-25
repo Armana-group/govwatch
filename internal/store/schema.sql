@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS system_changes (
 );
 CREATE INDEX IF NOT EXISTS system_changes_height ON system_changes (height);
 CREATE INDEX IF NOT EXISTS system_changes_provisional ON system_changes (height) WHERE irreversible = 0;
+CREATE INDEX IF NOT EXISTS system_changes_confirmed_flags ON system_changes (contract_id, height) WHERE kind = 'set_system_contract' AND irreversible = 1;
 
 CREATE TABLE IF NOT EXISTS system_contracts (
   contract_id BLOB PRIMARY KEY,
@@ -69,3 +70,32 @@ CREATE TABLE IF NOT EXISTS watermark (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   irreversible INTEGER NOT NULL      -- highest height known to be irreversible
 );
+
+-- One collector database has one notification network; routes have independent cursors.
+CREATE TABLE IF NOT EXISTS notification_network (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  network TEXT NOT NULL CHECK (network IN ('mainnet', 'harbinger'))
+);
+CREATE TABLE IF NOT EXISTS notification_routes (
+  network TEXT NOT NULL,
+  destination TEXT NOT NULL,
+  from_height INTEGER NOT NULL CHECK (from_height > 0),
+  next_height INTEGER NOT NULL CHECK (next_height >= from_height),
+  cooldown_until INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (network, destination)
+);
+CREATE TABLE IF NOT EXISTS notification_outbox (
+  id INTEGER PRIMARY KEY,
+  network TEXT NOT NULL,
+  destination TEXT NOT NULL,
+  height INTEGER NOT NULL,
+  block_id BLOB NOT NULL,
+  event_identity TEXT NOT NULL,
+  text TEXT NOT NULL CHECK (length(text) <= 3500),
+  state TEXT NOT NULL DEFAULT 'pending' CHECK (state IN ('pending', 'sending', 'sent', 'failed', 'uncertain')),
+  message_id INTEGER NOT NULL DEFAULT 0,
+  retry_at INTEGER NOT NULL DEFAULT 0,
+  UNIQUE (network, destination, block_id, event_identity),
+  FOREIGN KEY (network, destination) REFERENCES notification_routes (network, destination)
+);
+CREATE INDEX IF NOT EXISTS notification_outbox_pending ON notification_outbox (network, destination, retry_at, id) WHERE state = 'pending';
